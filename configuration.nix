@@ -2,7 +2,7 @@
 # your system. Help is available in the configuration.nix(5) man page, on
 # https://search.nixos.org/options and in the NixOS manual (`nixos-help`).
 
-{ config, pkgs, ... }:
+{ config, pkgs, inputs, ... }:
 
 {
   imports = [ 
@@ -12,7 +12,7 @@
   system.stateVersion = "25.11";
 
   # File Systems с добавленными субволами (@nix, @log, @cache)
-  # Замени /dev/disk/by-uuid/ на реальные UUID из blkid
+  # ЗАМЕНИ UUID на реальные из blkid
   fileSystems."/" = {
     device = "/dev/disk/by-uuid/твой-uuid";
     fsType = "btrfs";
@@ -86,33 +86,25 @@
     # Firewall configuration
     firewall = {
       enable = true;
-      # Разрешаем SSH
       allowedTCPPorts = [ 22 ];
       allowedUDPPorts = [ ];
     };
   };
 
-  # OpenSSH сервер - МИНИМАЛЬНАЯ конфигурация (не трогаем)
+  # OpenSSH сервер
   services.openssh = {
     enable = true;
-    
-    # Минимальные настройки для работы
     settings = {
-      # Аутентификация
       PasswordAuthentication = true;
       PubkeyAuthentication = true;
-      
-      # Безопасность
       PermitRootLogin = "no";
       PermitEmptyPasswords = false;
-      
-      # Базовые настройки
       X11Forwarding = true;
       PrintMotd = true;
     };
   };
 
-  # MOTD (Message of the Day)
+  # MOTD
   environment.etc."motd".text = ''
     Welcome to ${config.networking.hostName}!
     NixOS ${config.system.nixos.release}
@@ -139,6 +131,27 @@
     jack.enable = true;
   };
 
+  # X11 для bspwm
+  services.xserver = {
+    enable = true;
+    # Не устанавливаем оконный менеджер на уровне системы
+    # Он будет через home-manager
+    displayManager = {
+      lightdm.enable = false;
+      gdm.enable = false;
+      sddm.enable = false;
+      defaultSession = "none+bspwm"; # Для совместимости
+    };
+    
+    # Только базовые X11 настройки
+    layout = "us";
+    xkbVariant = "";
+    xkbOptions = "caps:escape"; # Капс лок -> Escape
+  };
+
+  # Убедиться что X11 работает без display manager
+  services.xserver.autorun = true;
+
   # Localization
   time.timeZone = "Europe/Moscow";
   i18n.defaultLocale = "en_US.UTF-8";
@@ -158,11 +171,8 @@
       "audio" 
       "video" 
       "storage"
-      "input"  # Добавили для input устройств (если нужно)
+      "input"
     ];
-    # Пароль нужно будет установить через 'passwd'
-    hashedPassword = null;
-    
     shell = pkgs.bash;
     createHome = true;
     home = "/home/denis";
@@ -174,54 +184,36 @@
     wheelNeedsPassword = true;
   };
 
-  # Programs - SSH агент включается здесь
+  # Programs - SSH агент
   programs.ssh = {
     startAgent = true;
     agentTimeout = "30m";
-    extraConfig = ''
-      # Дополнительные настройки SSH клиента
-    '';
   };
 
-  # Podman (контейнеризация, альтернатива Docker)
+  # Podman
   virtualisation.podman = {
     enable = true;
-    dockerCompat = true;  # Для совместимости с docker командами (podman -> docker alias)
-    defaultNetwork.settings.dns_enabled = true;  # DNS в контейнерах
+    dockerCompat = true;
+    defaultNetwork.settings.dns_enabled = true;
     autoPrune = {
-      enable = true;  # Авто-очистка неиспользуемых образов/контейнеров
+      enable = true;
       dates = "weekly";
     };
   };
 
-  # Fonts (шрифты для терминала/консоли/приложений)
+  # Fonts (перенесены в home-manager, но можно оставить системные)
   fonts.packages = with pkgs; [
-  noto-fonts
-  noto-fonts-cjk-sans
-  noto-fonts-color-emoji
-  liberation_ttf
-  font-awesome
+    noto-fonts
+    noto-fonts-cjk-sans
+    noto-fonts-color-emoji
+    liberation_ttf
+    font-awesome
+    nerd-fonts.jetbrains-mono
+    nerd-fonts.fira-code
+    nerd-fonts.hack
+  ];
 
-  # Nerd Fonts — теперь отдельные пакеты (новый синтаксис с 25.05+)
-  nerd-fonts.jetbrains-mono
-  nerd-fonts.fira-code
-  nerd-fonts.hack
-];
-
-  # Подсветка синтаксиса и полезные утилиты
-  programs.bat.enable = true;  # bat - cat с подсветкой синтаксиса
-  environment.variables = {
-    BAT_THEME = "Dracula";  # Тема для bat (можно изменить)
-  };
-
-  programs.bash = {
-    shellAliases = {
-      cat = "bat";  # Заменяем cat на bat для подсветки
-      ls = "ls --color=auto";  # Цвета в ls
-    };
-  };
-
-  # System Packages
+  # System Packages (только системные утилиты)
   environment.systemPackages = with pkgs; [
     # Основные утилиты
     vim
@@ -245,22 +237,29 @@
     nmap
     netcat-openbsd
     
-    # Дополнительные инструменты для Git
-    git-crypt    # для шифрования секретов в репозитории
-    gh           # GitHub CLI
-    lazygit      # TUI интерфейс для Git
-
     # Системные утилиты
     usbutils
     pciutils
-
+    
     # Подсветка и шрифты
-    bat  # Для подсветки синтаксиса в терминале
-    ripgrep  # rg - быстрый grep с подсветкой
+    bat
+    ripgrep
 
     # Podman-related
-    podman-compose  # Для compose-файлов (если нужно)
-    dive  # Анализатор образов контейнеров
+    podman-compose
+    dive
+
+    # Для отладки
+    psmisc # содержит pstree, killall и другие
+    lsof
+    file
+    tree
+
+    # xorg утилиты
+    xorg.xinit # для запуска startx
+    xorg.xrandr # управление мониторами
+    xorg.xset # настройки X
+    xclip # работа с буфером обмена в X
   ];
   
   # Дополнительные сервисы
@@ -273,22 +272,28 @@
   # Включение firmware
   hardware.enableRedistributableFirmware = true;
 
-  # Nix settings
-  nix.settings = {
-    auto-optimise-store = true;
+  # Nix settings для flakes
+  nix = {
+  # УДАЛИТЕ строку package = pkgs.nixFlakes;
+  # Просто добавьте experimental-features
+  settings = {
     experimental-features = [ "nix-command" "flakes" ];
-    substituters = [ "https://cache.nixos.org/" "https://nix-community.cachix.org" ];
-    trusted-public-keys = [
-      "cache.nixos.org-1:6NCHdD59X431o0gWypbMrAURkbJ16ZPMQFGspcDShjY="
-      "nix-community.cachix.org-1:mB9FSh9qf2dCimDSUo8Zy7bkq5CX+/rkCWyvRCYg3Fs="
-    ];
+    auto-optimise-store = true;
+    trusted-users = [ "root" "denis" ];
   };
-
-  # Авто-очистка Nix
-  nix.gc = {
+  
+  gc = {
     automatic = true;
     dates = "weekly";
     options = "--delete-older-than 14d";
+  };
+};
+    
+    gc = {
+      automatic = true;
+      dates = "weekly";
+      options = "--delete-older-than 14d";
+    };
   };
 
   # Логи journald
