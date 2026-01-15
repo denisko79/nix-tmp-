@@ -11,47 +11,60 @@
   boot.kernelModules = [ ];
   boot.extraModulePackages = [ ];
 
-  # Основные субволы (обновлено с добавлением @nix, @log, @cache)
+  # Основные субволы Btrfs
+  # =======================
+  # ВАЖНО: Убедитесь, что все эти субволы созданы на диске!
+  # Команда для создания: sudo btrfs subvolume create /mnt/@nix
+  
+  # Корневой раздел
   fileSystems."/" = {
-    device = "/dev/disk/by-uuid/твой-uuid-здесь";  # ← замени на реальный из blkid
+    device = "/dev/disk/by-uuid/ВАШ-КОРНЕВОЙ-UUID";  # ← заменить на реальный
     fsType = "btrfs";
     options = [ "subvol=@" "compress=zstd" "noatime" ];
   };
 
+  # Домашний каталог
   fileSystems."/home" = {
-    device = "/dev/disk/by-uuid/твой-uuid-здесь";  # тот же диск
+    device = "/dev/disk/by-uuid/ТОТ-ЖЕ-КОРНЕВОЙ-UUID";  # тот же диск
     fsType = "btrfs";
     options = [ "subvol=@home" "compress=zstd" "noatime" ];
   };
 
+  # Каталог Nix store (изолирует пакеты)
   fileSystems."/nix" = {
-    device = "/dev/disk/by-uuid/твой-uuid-здесь";
+    device = "/dev/disk/by-uuid/ТОТ-ЖЕ-КОРНЕВОЙ-UUID";
     fsType = "btrfs";
     options = [ "subvol=@nix" "compress=zstd" "noatime" ];
   };
 
+  # Логи (полезно для изоляции и ротации)
   fileSystems."/var/log" = {
-    device = "/dev/disk/by-uuid/твой-uuid-здесь";
+    device = "/dev/disk/by-uuid/ТОТ-ЖЕ-КОРНЕВОЙ-UUID";
     fsType = "btrfs";
     options = [ "subvol=@log" "compress=zstd" "noatime" ];
   };
 
+  # Кэш (легко очищается)
   fileSystems."/var/cache" = {
-    device = "/dev/disk/by-uuid/твой-uuid-здесь";
+    device = "/dev/disk/by-uuid/ТОТ-ЖЕ-КОРНЕВОЙ-UUID";
     fsType = "btrfs";
     options = [ "subvol=@cache" "compress=zstd" "noatime" ];
   };
 
+  # EFI раздел (должен быть другой UUID!)
   fileSystems."/boot" = {
-    device = "/dev/disk/by-uuid/твой-boot-uuid-здесь";
+    device = "/dev/disk/by-uuid/ВАШ-BOOT-UUID";  # ← это должен быть другой UUID!
     fsType = "vfat";
     options = [ "fmask=0022" "dmask=0022" ];
   };
 
-  # Swap отключён (у тебя zram в configuration.nix — это правильно для VM)
+  # Swap отключён (используется zram из configuration.nix)
   swapDevices = [ ];
 
-  # Платформа и VirtualBox guest (оставляем как было)
+  # Платформа и VirtualBox guest
   nixpkgs.hostPlatform = lib.mkDefault "x86_64-linux";
   virtualisation.virtualbox.guest.enable = true;
+  
+  # Убедитесь, что Btrfs поддержка включена в ядре
+  boot.supportedFilesystems = [ "btrfs" "vfat" "ntfs" ];
 }
