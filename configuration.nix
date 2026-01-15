@@ -201,7 +201,11 @@
   noto-fonts-color-emoji
   liberation_ttf
   font-awesome
-  (nerdfonts.override { fonts = [ "JetBrainsMono" "FiraCode" "Hack" ]; })
+
+  # Nerd Fonts — теперь отдельные пакеты (новый синтаксис с 25.05+)
+  nerd-fonts.jetbrains-mono
+  nerd-fonts.fira-code
+  nerd-fonts.hack
 ];
 
   # Подсветка синтаксиса и полезные утилиты
