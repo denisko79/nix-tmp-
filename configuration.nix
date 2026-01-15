@@ -196,13 +196,14 @@
 
   # Fonts (шрифты для терминала/консоли/приложений)
   fonts.packages = with pkgs; [
-    noto-fonts
-    noto-fonts-cjk
-    noto-fonts-emoji
-    liberation_ttf
-    font-awesome
-    (nerdfonts.override { fonts = [ "JetBrainsMono" "FiraCode" "Hack" ]; })
-  ];
+  noto-fonts
+  noto-fonts-cjk-sans     # основной для большинства случаев (без serif)
+  # noto-fonts-cjk-serif  # если нужен serif-вариант (редко, но можно добавить)
+  noto-fonts-emoji
+  liberation_ttf
+  font-awesome
+  (nerdfonts.override { fonts = [ "JetBrainsMono" "FiraCode" "Hack" ]; })
+];
 
   # Подсветка синтаксиса и полезные утилиты
   programs.bat.enable = true;  # bat - cat с подсветкой синтаксиса
