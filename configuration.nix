@@ -197,9 +197,8 @@
   # Fonts (шрифты для терминала/консоли/приложений)
   fonts.packages = with pkgs; [
   noto-fonts
-  noto-fonts-cjk-sans     # основной для большинства случаев (без serif)
-  # noto-fonts-cjk-serif  # если нужен serif-вариант (редко, но можно добавить)
-  noto-fonts-emoji
+  noto-fonts-cjk-sans
+  noto-fonts-color-emoji
   liberation_ttf
   font-awesome
   (nerdfonts.override { fonts = [ "JetBrainsMono" "FiraCode" "Hack" ]; })
