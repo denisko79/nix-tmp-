@@ -1,42 +1,39 @@
 {
-  description = "NixOS configuration with Home Manager and BSPWM";
+  description = "My NixOS configuration";
 
   inputs = {
-    # Официальные NixOS репозитории
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
-    
-    # Home Manager
     home-manager = {
       url = "github:nix-community/home-manager";
       inputs.nixpkgs.follows = "nixpkgs";
     };
-    
-    # Необязательно: дополнительные утилиты
-    nixos-hardware.url = "github:NixOS/nixos-hardware/master";
+    # Если вы используете другие флейки, добавьте их сюда
   };
 
-  outputs = { self, nixpkgs, home-manager, ... }@inputs: {
-    # NixOS конфигурация
-    nixosConfigurations.nixos = nixpkgs.lib.nixosSystem {
+  outputs = { self, nixpkgs, home-manager, ... }@inputs:
+    let
       system = "x86_64-linux";
-      specialArgs = { inherit inputs; };
-      modules = [
-        # Основная конфигурация системы
-        ./configuration.nix
-        
-        # Home Manager модуль
-        home-manager.nixosModules.home-manager
-        {
-          home-manager = {
-            useGlobalPkgs = true;
-            useUserPackages = true;
-            users.denis = import ./home-manager/home.nix;
-            
-            # Дополнительные настройки Home Manager
-            extraSpecialArgs = { inherit inputs; };
-          };
-        }
-      ];
+      pkgs = import nixpkgs {
+        inherit system;
+        config.allowUnfree = true;
+      };
+    in
+    {
+      nixosConfigurations.nixos = nixpkgs.lib.nixosSystem {
+        specialArgs = { inherit inputs; };
+        modules = [
+          ./configuration.nix
+          home-manager.nixosModules.home-manager
+          {
+            home-manager = {
+              useGlobalPkgs = true;
+              useUserPackages = true;
+              users.denis = ./home.nix;
+              # Если вы хотите использовать дополнительные каналы или модули
+              extraSpecialArgs = { inherit inputs; };
+            };
+          }
+        ];
+      };
     };
-  };
 }
