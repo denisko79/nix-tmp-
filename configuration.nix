@@ -1,6 +1,6 @@
 # Edit this configuration file to define what should be installed on
 # your system. Help is available in the configuration.nix(5) man page, on
-# https://search.nixos.org/options and in the NixOS manual (`nixos-help`).
+# https://search.nixos.org/options   and in the NixOS manual (`nixos-help`).
 
 { config, pkgs, inputs, ... }:
 
@@ -131,27 +131,6 @@
     jack.enable = true;
   };
 
-  # X11 для bspwm
-  services.xserver = {
-    enable = true;
-    # Не устанавливаем оконный менеджер на уровне системы
-    # Он будет через home-manager
-    displayManager = {
-      lightdm.enable = false;
-      gdm.enable = false;
-      sddm.enable = false;
-      defaultSession = "none+bspwm"; # Для совместимости
-    };
-    
-    # Только базовые X11 настройки
-    layout = "us";
-    xkbVariant = "";
-    xkbOptions = "caps:escape"; # Капс лок -> Escape
-  };
-
-  # Убедиться что X11 работает без display manager
-  services.xserver.autorun = true;
-
   # Localization
   time.timeZone = "Europe/Moscow";
   i18n.defaultLocale = "en_US.UTF-8";
@@ -201,18 +180,6 @@
     };
   };
 
-  # Fonts (перенесены в home-manager, но можно оставить системные)
-  fonts.packages = with pkgs; [
-    noto-fonts
-    noto-fonts-cjk-sans
-    noto-fonts-color-emoji
-    liberation_ttf
-    font-awesome
-    nerd-fonts.jetbrains-mono
-    nerd-fonts.fira-code
-    nerd-fonts.hack
-  ];
-
   # System Packages (только системные утилиты)
   environment.systemPackages = with pkgs; [
     # Основные утилиты
@@ -255,11 +222,11 @@
     file
     tree
 
-    # xorg утилиты
-    xorg.xinit # для запуска startx
-    xorg.xrandr # управление мониторами
-    xorg.xset # настройки X
-    xclip # работа с буфером обмена в X
+    # xorg утилиты - теперь будут в home.nix
+    # xorg.xinit # для запуска startx
+    # xorg.xrandr
+    # xorg.xset
+    # xclip
   ];
   
   # Дополнительные сервисы
@@ -274,21 +241,12 @@
 
   # Nix settings для flakes
   nix = {
-  # УДАЛИТЕ строку package = pkgs.nixFlakes;
-  # Просто добавьте experimental-features
-  settings = {
-    experimental-features = [ "nix-command" "flakes" ];
-    auto-optimise-store = true;
-    trusted-users = [ "root" "denis" ];
-  };
+    settings = {
+      experimental-features = [ "nix-command" "flakes" ];
+      auto-optimise-store = true;
+      trusted-users = [ "root" "denis" ];
+    };
   
-  gc = {
-    automatic = true;
-    dates = "weekly";
-    options = "--delete-older-than 14d";
-  };
-};
-    
     gc = {
       automatic = true;
       dates = "weekly";
